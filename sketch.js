@@ -16,6 +16,11 @@ let layers = [
   { base: 0.85, half: 0.30, apex: 1.45 }
 ];
 
+// sound variables
+let wind;             // noise
+let windFilter;       // low-pass
+let windOn = false;   
+
 //create the canvas
 function setup() {
   createCanvas(400, 400);
@@ -31,7 +36,16 @@ function setup() {
       offset: random(TWO_PI)       // variable for sin func
     });
   }
+  
+    // wind sound cycle: brown noise -> low-freq pass -> amp
+  wind = new p5.Noise('brown');   // deep 
+  windFilter = new p5.LowPass();  
+  wind.disconnect();              
+  wind.connect(windFilter);       // plug it into the filter
+  wind.amp(0);                    // start silent
+  wind.start();
 }
+
 
 // draw items onto the background
 function draw() {
@@ -80,6 +94,39 @@ function draw() {
     fill(255);
     noStroke();
     circle(flake.x, flake.y, flake.size);
+    
+    }
+    // CONDITIONAL: 
+  if (windOn) {
+    let gust = noise(frameCount * 0.005);        // slow wandering 0..1
+    wind.amp(0.05 + gust * 0.25, 0.1);           // gust volume 
+    windFilter.freq(200 + gust * 600);           // freq
+  }
+  
+   // hint in the corner so people know the canvas is clickable
+  fill(255);
+  noStroke();
+  textSize(12);
+  textAlign(RIGHT, BOTTOM);
+  fill(90, 90, 20);
+  if (windOn) {
+    text("click to mute wind", width - 8, height - 6);
+  } else {
+    text("click for wind sound", width - 8, height - 6);
+  }
+}
+ 
+// user interactive
+function mousePressed() {
+  userStartAudio(); 
+ 
+  // CONDITIONAL: flip between wind on and wind off
+  if (windOn) {
+    wind.amp(0, 0.8); // fade out over 0.8 seconds
+    windOn = false;
+  } else {
+    wind.amp(0.2, 0.8); // fade in over 0.8 seconds
+    windOn = true;
   }
 }
 
